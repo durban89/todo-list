@@ -1,6 +1,7 @@
 {
   "name": "todo-list",
   "version": "1.0.0",
+  "license": "AGPL-3.0-only",
   "description": "A simple Todo List browser extension built with WXT, React and Tailwind CSS v4.",
   "private": true,
   "type": "module",
