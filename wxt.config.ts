@@ -8,7 +8,6 @@ export default defineConfig({
   manifest: {
     name: 'Todo List',
     description: 'A simple, fast todo list that lives in your browser.',
-    version: '1.0.0',
     permissions: ['storage'],
   },
 
