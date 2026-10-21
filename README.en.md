@@ -11,6 +11,7 @@ A simple, fast browser extension for managing your to-do list. Built with **WXT 
 - Persist data with `browser.storage`, so your to-dos remain available after closing the browser
 - Show the number of active items on the extension icon in real time
 - Automatically generate icons in multiple sizes with `@wxt-dev/auto-icons`
+- Two surfaces: a toolbar popup and a browser side panel
 
 ## Tech Stack
 
@@ -31,15 +32,18 @@ A simple, fast browser extension for managing your to-do list. Built with **WXT 
 │  ├─ icon.svg          # Source icon; resized variants are generated during the build
 │  └─ tailwind.css      # Tailwind CSS entry point
 ├─ components/          # Reusable UI components
+│  ├─ TodoApp.tsx       # Main UI, shared by the popup and the side panel
 │  ├─ TodoFilters.tsx
 │  ├─ TodoInput.tsx
 │  └─ TodoItem.tsx
 ├─ entrypoints/
 │  ├─ background.ts     # Background script (updates the icon badge)
-│  └─ popup/
+│  ├─ popup/            # Toolbar popup
+│  │  ├─ index.html
+│  │  └─ main.tsx
+│  └─ sidepanel/        # Browser side panel
 │     ├─ index.html
-│     ├─ main.tsx
-│     └─ App.tsx
+│     └─ main.tsx
 ├─ hooks/
 │  └─ useTodos.ts       # To-do state management and persistence
 ├─ utils/
@@ -68,6 +72,35 @@ Build output is generated in `.output/chrome-mv3`.
 1. Open `chrome://extensions`.
 2. Enable **Developer mode** in the top-right corner.
 3. Click **Load unpacked** and select the `.output/chrome-mv3` directory.
+
+## Open the Side Panel
+
+Besides the toolbar popup, the list can be docked in the browser side panel:
+
+- **Chrome**: right-click the extension icon → **Open side panel**, or click the `Side panel` button in the popup header
+- **Firefox**: right-click the extension icon → **Open in sidebar**
+
+The side panel stays visible, which is handy while browsing.
+
+## Troubleshooting: cannot type Chinese in the popup
+
+On **Linux + Wayland**, Chrome's bubble-style popups (extension popups, the bookmark star bubble, ...) never receive key events from the input method (fcitx5 / ibus). Typing pinyin simply produces Latin letters and no candidate window appears. This is a known Chromium defect, unrelated to this extension:
+
+- [issues.chromium.org/issues/572154970](https://issues.chromium.org/issues/572154970) — Wayland: IME does not work in popup bubbles
+- [issues.chromium.org/issues/575203728](https://issues.chromium.org/issues/575203728) — popup of the extension cannot accept Chinese characters (duplicate of the above)
+
+Chinese input still works in regular web pages, the omnibox and standalone dialogs, which is how you can confirm the scope of the problem.
+
+Workarounds:
+
+1. **Use the side panel instead** (recommended). It is docked to the main window rather than rendered as a bubble, so the input method works normally.
+2. **Run Chrome on X11** (XWayland), which fixes every popup at once:
+
+   ```bash
+   google-chrome --ozone-platform=x11
+   ```
+
+   The same flag can be added to the Chrome launcher in your desktop environment.
 
 ## Available Scripts
 

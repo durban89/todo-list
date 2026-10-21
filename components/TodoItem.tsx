@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CompositionEvent,
+  type KeyboardEvent,
+} from 'react';
 import type { Todo } from '@/utils/todos';
 
 interface TodoItemProps {
@@ -12,6 +18,8 @@ export function TodoItem({ todo, onToggle, onRemove, onUpdate }: TodoItemProps) 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(todo.text);
   const inputRef = useRef<HTMLInputElement>(null);
+  const composing = useRef(false);
+  const commitPending = useRef(false);
 
   useEffect(() => {
     if (editing) inputRef.current?.select();
@@ -22,16 +30,38 @@ export function TodoItem({ todo, onToggle, onRemove, onUpdate }: TodoItemProps) 
     setEditing(true);
   }
 
-  function commit() {
+  function commit(text?: string) {
+    // The IME is still composing, the candidate window may steal the focus.
+    if (composing.current) {
+      commitPending.current = true;
+      return;
+    }
+    const value = (text ?? draft).trim();
     setEditing(false);
-    if (draft.trim() && draft !== todo.text) {
-      onUpdate(todo.id, draft);
+    commitPending.current = false;
+    if (value && value !== todo.text) {
+      onUpdate(todo.id, value);
     }
   }
 
+  function handleCompositionEnd(event: CompositionEvent<HTMLInputElement>) {
+    composing.current = false;
+    setDraft(event.currentTarget.value);
+    if (commitPending.current) commit(event.currentTarget.value);
+  }
+
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (event.key === 'Enter') commit();
-    if (event.key === 'Escape') setEditing(false);
+    const isComposing = event.nativeEvent.isComposing || composing.current;
+
+    if (event.key === 'Enter') {
+      // Enter confirms the IME candidate while composing, it must not commit.
+      if (isComposing) return;
+      commit();
+    }
+    if (event.key === 'Escape') {
+      if (isComposing) return;
+      setEditing(false);
+    }
   }
 
   return (
@@ -62,7 +92,11 @@ export function TodoItem({ todo, onToggle, onRemove, onUpdate }: TodoItemProps) 
           ref={inputRef}
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
-          onBlur={commit}
+          onCompositionStart={() => {
+            composing.current = true;
+          }}
+          onCompositionEnd={handleCompositionEnd}
+          onBlur={() => commit()}
           onKeyDown={handleKeyDown}
           className="min-w-0 flex-1 rounded border border-indigo-300 px-2 py-1 text-sm outline-none ring-2 ring-indigo-100"
         />

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { TodoFilters } from '@/components/TodoFilters';
 import { TodoInput } from '@/components/TodoInput';
 import { TodoItem } from '@/components/TodoItem';
@@ -9,7 +10,12 @@ const EMPTY_MESSAGE: Record<string, string> = {
   completed: 'No completed todos yet.',
 };
 
-export function App() {
+interface TodoAppProps {
+  className?: string;
+  headerAction?: ReactNode;
+}
+
+export function TodoApp({ className = 'w-[360px]', headerAction }: TodoAppProps) {
   const {
     filtered,
     filter,
@@ -25,12 +31,15 @@ export function App() {
   } = useTodos();
 
   return (
-    <div className="w-[360px] bg-white p-4 font-sans text-slate-800">
-      <header className="mb-4 flex items-baseline justify-between">
+    <div className={`${className} bg-white p-4 font-sans text-slate-800`}>
+      <header className="mb-4 flex items-baseline justify-between gap-2">
         <h1 className="text-lg font-semibold tracking-tight">Todo List</h1>
-        <span className="text-xs text-slate-400">
-          {activeCount === 0 ? 'All done' : `${activeCount} active`}
-        </span>
+        <div className="flex items-center gap-2">
+          {headerAction}
+          <span className="text-xs text-slate-400">
+            {activeCount === 0 ? 'All done' : `${activeCount} active`}
+          </span>
+        </div>
       </header>
 
       <TodoInput onAdd={addTodo} />

@@ -11,6 +11,7 @@
 - 基于 `browser.storage` 持久化，关闭浏览器后数据不丢失
 - 扩展图标实时显示未完成数量角标
 - 图标按多尺寸自动生成（`@wxt-dev/auto-icons`）
+- 两种使用形态：工具栏弹窗（popup）与浏览器侧边栏（side panel）
 
 ## 技术栈
 
@@ -31,15 +32,18 @@
 │  ├─ icon.svg          # 图标源文件，构建时自动生成各尺寸
 │  └─ tailwind.css      # Tailwind 入口
 ├─ components/          # 可复用 UI 组件
+│  ├─ TodoApp.tsx       # 主界面（popup 与 side panel 共用）
 │  ├─ TodoFilters.tsx
 │  ├─ TodoInput.tsx
 │  └─ TodoItem.tsx
 ├─ entrypoints/
 │  ├─ background.ts     # 后台脚本（更新图标角标）
-│  └─ popup/
+│  ├─ popup/            # 工具栏弹窗
+│  │  ├─ index.html
+│  │  └─ main.tsx
+│  └─ sidepanel/        # 浏览器侧边栏
 │     ├─ index.html
-│     ├─ main.tsx
-│     └─ App.tsx
+│     └─ main.tsx
 ├─ hooks/
 │  └─ useTodos.ts       # 待办状态管理与持久化
 ├─ utils/
@@ -68,6 +72,35 @@ npm run build
 1. 打开 `chrome://extensions`
 2. 开启右上角「开发者模式」
 3. 点击「加载已解压的扩展程序」，选择 `.output/chrome-mv3` 目录
+
+## 打开侧边栏
+
+除了点击工具栏图标弹出 popup，也可以把待办列表固定在浏览器侧边栏：
+
+- **Chrome**：右键点击扩展图标 → 「打开侧边栏」，或点击 popup 右上角的 `Side panel` 按钮
+- **Firefox**：右键点击扩展图标 → 「在侧边栏中打开」
+
+侧边栏常驻显示，适合边浏览网页边记录。
+
+## 常见问题：弹窗里打不出中文
+
+在 **Linux + Wayland** 下，Chrome 的「气泡类」弹窗（扩展弹窗、书签星标气泡等）无法接收输入法（fcitx5 / ibus）的按键事件，表现为：敲拼音时直接输出英文字母，候选框不弹出。这是 Chromium 的已知缺陷，与本扩展无关：
+
+- [issues.chromium.org/issues/572154970](https://issues.chromium.org/issues/572154970) — Wayland: IME does not work in popup bubbles
+- [issues.chromium.org/issues/575203728](https://issues.chromium.org/issues/575203728) — popup of the extension cannot accept Chinese characters（上一条的重复 issue）
+
+普通网页、地址栏、独立对话框中输入中文均正常，可用来确认问题范围。
+
+可行的解决办法：
+
+1. **改用侧边栏**（推荐）。侧边栏是停靠在主窗口上的面板，不属于气泡弹窗，输入法可以正常接管。
+2. **让 Chrome 走 X11**（XWayland），可一次性解决所有弹窗：
+
+   ```bash
+   google-chrome --ozone-platform=x11
+   ```
+
+   也可以在桌面环境里为 Chrome 加上同样的启动参数。
 
 ## 可用脚本
 
